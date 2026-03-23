@@ -543,6 +543,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     description: Schema.Attribute.RichText;
     excerpt: Schema.Attribute.Text;
+    image: Schema.Attribute.Media<'images'>;
     isPublishedToStore: Schema.Attribute.Boolean &
       Schema.Attribute.DefaultTo<true>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
