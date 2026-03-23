@@ -1,0 +1,23 @@
+{
+  "name": "backend",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "develop": "mkdir -p .home .config && HOME=$PWD/.home XDG_CONFIG_HOME=$PWD/.config strapi develop",
+    "start": "mkdir -p .home .config && HOME=$PWD/.home XDG_CONFIG_HOME=$PWD/.config strapi start",
+    "build": "mkdir -p .home .config && HOME=$PWD/.home XDG_CONFIG_HOME=$PWD/.config strapi build"
+  },
+  "dependencies": {
+    "@strapi/plugin-users-permissions": "5.12.2",
+    "@strapi/strapi": "5.12.2",
+    "better-sqlite3": "11.9.1",
+    "pg": "8.14.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-router-dom": "6.30.0",
+    "styled-components": "6.1.17"
+  },
+  "devDependencies": {
+    "@types/node": "22.14.0"
+  }
+}
