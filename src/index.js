@@ -7,7 +7,8 @@ const publicReadActions = [
   "api::article.article.findOne",
   "api::page.page.find",
   "api::page.page.findOne",
-  "api::site-setting.site-setting.find"
+  "api::site-setting.site-setting.find",
+  "api::order.order.create"
 ];
 
 async function ensurePublicPermissions(strapi) {
