@@ -3,8 +3,6 @@ const publicReadActions = [
   "api::product.product.findOne",
   "api::category.category.find",
   "api::category.category.findOne",
-  "api::article.article.find",
-  "api::article.article.findOne",
   "api::page.page.find",
   "api::page.page.findOne",
   "api::site-setting.site-setting.find",
@@ -74,24 +72,6 @@ async function ensureSeedContent(strapi) {
         category: category.id,
         seoTitle: "ECG Monitor Pro",
         seoDescription: "Тестовая карточка товара для локального запуска shop.kardi."
-      }
-    });
-  }
-
-  const existingArticle = await strapi.db.query("api::article.article").findOne({
-    where: { slug: "how-to-choose-monitor" }
-  });
-
-  if (!existingArticle) {
-    await strapi.db.query("api::article.article").create({
-      data: {
-        title: "Как выбрать монитор пациента для частной клиники",
-        slug: "how-to-choose-monitor",
-        excerpt: "Критерии подбора оборудования для амбулаторной и стационарной практики.",
-        content:
-          "<p>Тестовая статья для проверки витрины и работы Strapi. Дальше этот контент будет заменен миграцией с текущего сайта.</p>",
-        seoTitle: "Как выбрать монитор пациента",
-        seoDescription: "Тестовая статья для локального запуска."
       }
     });
   }
