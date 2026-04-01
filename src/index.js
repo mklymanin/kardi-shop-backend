@@ -6,6 +6,7 @@ const publicReadActions = [
   "api::page.page.find",
   "api::page.page.findOne",
   "api::site-setting.site-setting.find",
+  "api::lead.lead.create",
   "api::order.order.create"
 ];
 

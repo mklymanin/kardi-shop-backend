@@ -8,7 +8,6 @@ CMS на `Strapi` для сайта `shop.kardi.ru`.
 - `category`
 - `order`
 - `lead`
-- `article`
 - `page`
 - `site-setting`
 
@@ -18,5 +17,3 @@ CMS на `Strapi` для сайта `shop.kardi.ru`.
 - заказы и заявки
 - SEO-поля
 - статические страницы
-- статьи и новости
-
