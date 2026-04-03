@@ -7,41 +7,47 @@ const publicReadActions = [
   "api::page.page.findOne",
   "api::site-setting.site-setting.find",
   "api::lead.lead.create",
-  "api::order.order.create"
+  "api::order.order.create",
 ];
 
 async function ensurePublicPermissions(strapi) {
-  const publicRole = await strapi.db.query("plugin::users-permissions.role").findOne({
-    where: { type: "public" }
-  });
+  const publicRole = await strapi.db
+    .query("plugin::users-permissions.role")
+    .findOne({
+      where: { type: "public" },
+    });
 
   if (!publicRole) {
     return;
   }
 
   for (const action of publicReadActions) {
-    const exists = await strapi.db.query("plugin::users-permissions.permission").findOne({
-      where: {
-        role: publicRole.id,
-        action
-      }
-    });
+    const exists = await strapi.db
+      .query("plugin::users-permissions.permission")
+      .findOne({
+        where: {
+          role: publicRole.id,
+          action,
+        },
+      });
 
     if (!exists) {
       await strapi.db.query("plugin::users-permissions.permission").create({
         data: {
           role: publicRole.id,
-          action
-        }
+          action,
+        },
       });
     }
   }
 }
 
 async function ensureSeedContent(strapi) {
-  const existingCategory = await strapi.db.query("api::category.category").findOne({
-    where: { slug: "diagnostika" }
-  });
+  const existingCategory = await strapi.db
+    .query("api::category.category")
+    .findOne({
+      where: { slug: "diagnostika" },
+    });
 
   const category =
     existingCategory ||
@@ -49,15 +55,19 @@ async function ensureSeedContent(strapi) {
       data: {
         title: "Диагностика",
         slug: "diagnostika",
-        description: "Оборудование для кардиологической и функциональной диагностики.",
+        description:
+          "Оборудование для кардиологической и функциональной диагностики.",
         seoTitle: "Диагностическое оборудование",
-        seoDescription: "Категория диагностического оборудования для магазина shop.kardi."
-      }
+        seoDescription:
+          "Категория диагностического оборудования для магазина shop.kardi.",
+      },
     }));
 
-  const existingProduct = await strapi.db.query("api::product.product").findOne({
-    where: { slug: "ecg-monitor-pro" }
-  });
+  const existingProduct = await strapi.db
+    .query("api::product.product")
+    .findOne({
+      where: { slug: "ecg-monitor-pro" },
+    });
 
   if (!existingProduct) {
     await strapi.db.query("api::product.product").create({
@@ -65,20 +75,22 @@ async function ensureSeedContent(strapi) {
         title: "ECG Monitor Pro",
         slug: "ecg-monitor-pro",
         sku: "KARDI-ECG-001",
-        excerpt: "Компактный монитор пациента для амбулаторной и стационарной практики.",
+        excerpt:
+          "Компактный монитор пациента для амбулаторной и стационарной практики.",
         description:
           "<p>Тестовый товар, созданный при первом запуске проекта. Его можно редактировать или удалить через админку Strapi.</p>",
         price: 89000,
         isPublishedToStore: true,
         category: category.id,
         seoTitle: "ECG Monitor Pro",
-        seoDescription: "Тестовая карточка товара для локального запуска shop.kardi."
-      }
+        seoDescription:
+          "Тестовая карточка товара для локального запуска shop.kardi.",
+      },
     });
   }
 
   const existingPage = await strapi.db.query("api::page.page").findOne({
-    where: { slug: "about" }
+    where: { slug: "about" },
   });
 
   if (!existingPage) {
@@ -89,14 +101,16 @@ async function ensureSeedContent(strapi) {
         content:
           "<p>Это тестовая страница, созданная автоматически при первом запуске локального проекта.</p>",
         seoTitle: "О компании",
-        seoDescription: "Тестовая информационная страница."
-      }
+        seoDescription: "Тестовая информационная страница.",
+      },
     });
   }
 
-  const siteSettings = await strapi.db.query("api::site-setting.site-setting").findOne({
-    where: {}
-  });
+  const siteSettings = await strapi.db
+    .query("api::site-setting.site-setting")
+    .findOne({
+      where: {},
+    });
 
   if (!siteSettings) {
     await strapi.db.query("api::site-setting.site-setting").create({
@@ -105,8 +119,8 @@ async function ensureSeedContent(strapi) {
         defaultSeoTitle: "shop.kardi",
         defaultSeoDescription: "Новый магазин медицинского оборудования.",
         contactEmail: "info@shop.kardi.ru",
-        contactPhone: "+7 (495) 000-00-00"
-      }
+        contactPhone: "+7 (495) 000-00-00",
+      },
     });
   }
 }
@@ -117,5 +131,5 @@ module.exports = {
   async bootstrap({ strapi }) {
     await ensurePublicPermissions(strapi);
     await ensureSeedContent(strapi);
-  }
+  },
 };

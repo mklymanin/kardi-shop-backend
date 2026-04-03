@@ -10,9 +10,9 @@ module.exports = ({ env }) => {
         database: env("DATABASE_NAME", "shop_kardi"),
         user: env("DATABASE_USERNAME", "shop_kardi"),
         password: env("DATABASE_PASSWORD", "shop_kardi"),
-        ssl: env("DATABASE_SSL", "false") === "true"
+        ssl: env("DATABASE_SSL", "false") === "true",
       },
-      debug: env("DATABASE_DEBUG", "false") === "true"
-    }
+      debug: env("DATABASE_DEBUG", "false") === "true",
+    },
   };
 };
