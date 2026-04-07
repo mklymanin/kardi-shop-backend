@@ -31,6 +31,27 @@
     "total": {
       "type": "decimal"
     },
+    "currency": {
+      "type": "string",
+      "default": "RUB"
+    },
+    "paymentProvider": {
+      "type": "string"
+    },
+    "paymentId": {
+      "type": "string"
+    },
+    "paymentUrl": {
+      "type": "text"
+    },
+    "paymentStatus": {
+      "type": "enumeration",
+      "enum": ["pending", "waiting_for_capture", "paid", "canceled", "failed"],
+      "default": "pending"
+    },
+    "paidAt": {
+      "type": "datetime"
+    },
     "status": {
       "type": "enumeration",
       "enum": ["new", "processing", "completed", "cancelled"],

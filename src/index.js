@@ -7,8 +7,8 @@ const publicReadActions = [
   "api::page.page.findOne",
   "api::site-setting.site-setting.find",
   "api::lead.lead.create",
-  "api::order.order.create",
 ];
+const revokedPublicActions = ["api::order.order.create"];
 
 async function ensurePublicPermissions(strapi) {
   const publicRole = await strapi.db
@@ -37,6 +37,23 @@ async function ensurePublicPermissions(strapi) {
           role: publicRole.id,
           action,
         },
+      });
+    }
+  }
+
+  for (const action of revokedPublicActions) {
+    const existing = await strapi.db
+      .query("plugin::users-permissions.permission")
+      .findOne({
+        where: {
+          role: publicRole.id,
+          action,
+        },
+      });
+
+    if (existing) {
+      await strapi.db.query("plugin::users-permissions.permission").delete({
+        where: { id: existing.id },
       });
     }
   }
