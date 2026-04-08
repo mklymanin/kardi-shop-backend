@@ -1,6 +1,29 @@
 "use strict";
 
 module.exports = {
+  async quote(ctx) {
+    try {
+      const result = await strapi
+        .service("api::checkout.checkout")
+        .quoteCheckout(ctx.request.body || {});
+      ctx.send(result, 200);
+    } catch (error) {
+      if (error?.name === "CheckoutValidationError") {
+        return ctx.badRequest(error.message, {
+          code: error.code || "CHECKOUT_VALIDATION_ERROR",
+        });
+      }
+
+      if (error?.name === "CheckoutBusinessError") {
+        return ctx.unprocessableEntity(error.message, {
+          code: error.code || "CHECKOUT_BUSINESS_ERROR",
+        });
+      }
+
+      strapi.log.error("[checkout] quote failed", error);
+      return ctx.internalServerError("Не удалось рассчитать заказ");
+    }
+  },
   async start(ctx) {
     try {
       const result = await strapi

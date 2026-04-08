@@ -303,99 +303,140 @@ async function createYooKassaPayment({
   });
 }
 
+async function buildCheckoutQuote(payload) {
+  const validated = validatePayload(payload);
+  const deliveryMethod = await getActiveDeliveryMethod(
+    validated.deliveryMethodCode
+  );
+  if (!deliveryMethod) {
+    throw new CheckoutBusinessError(
+      "Выбранный способ получения недоступен",
+      "DELIVERY_METHOD_NOT_AVAILABLE"
+    );
+  }
+
+  const needsAddress =
+    deliveryMethod.code === "courier" || deliveryMethod.code === "russian_post";
+  if (needsAddress && !validated.deliveryAddress) {
+    throw new CheckoutValidationError(
+      "Для выбранного способа получения требуется адрес доставки",
+      "DELIVERY_ADDRESS_REQUIRED"
+    );
+  }
+
+  const productMap = await fetchProductsBySlugs(
+    validated.items.map((item) => item.slug)
+  );
+  const lines = validated.items.map((item) => {
+    const product = productMap.get(item.slug);
+    if (!product) {
+      throw new CheckoutBusinessError(
+        `Товар "${item.slug}" не найден`,
+        "PRODUCT_NOT_FOUND"
+      );
+    }
+    const price = toMoneyNumber(product.price);
+    if (!price || price <= 0) {
+      throw new CheckoutBusinessError(
+        `У товара "${item.slug}" не задана цена`,
+        "PRODUCT_PRICE_INVALID"
+      );
+    }
+
+    const allowedCodes = (product.deliveryMethods || [])
+      .map((method) => normalizeText(method?.code))
+      .filter(Boolean);
+    if (
+      allowedCodes.length > 0 &&
+      !allowedCodes.includes(deliveryMethod.code)
+    ) {
+      throw new CheckoutBusinessError(
+        `Товар "${product.title || product.slug}" нельзя оформить со способом "${deliveryMethod.title}"`,
+        "PRODUCT_DELIVERY_NOT_ALLOWED"
+      );
+    }
+
+    return {
+      slug: item.slug,
+      title: String(product.title || product.slug || item.slug),
+      quantity: item.quantity,
+      price,
+    };
+  });
+
+  const subtotalBeforeDiscount = toMoneyNumber(
+    lines.reduce((sum, line) => sum + line.price * line.quantity, 0)
+  );
+  const coupon = await getActiveCoupon(validated.couponCode);
+  let discountAmount = 0;
+  let discountType = null;
+  let discountValue = null;
+  let subtotalAfterDiscount = subtotalBeforeDiscount;
+
+  if (coupon) {
+    discountType = coupon.discountType;
+    discountValue = toMoneyNumber(coupon.discountValue);
+    if (discountType === "percent") {
+      discountAmount = toMoneyNumber(
+        (subtotalBeforeDiscount * discountValue) / 100
+      );
+    } else {
+      discountAmount = toMoneyNumber(discountValue);
+    }
+
+    if (discountAmount > subtotalBeforeDiscount) {
+      discountAmount = subtotalBeforeDiscount;
+    }
+    subtotalAfterDiscount = toMoneyNumber(
+      subtotalBeforeDiscount - discountAmount
+    );
+  }
+
+  const deliveryPrice = toMoneyNumber(deliveryMethod.price);
+  const total = toMoneyNumber(subtotalAfterDiscount + deliveryPrice);
+
+  return {
+    validated,
+    deliveryMethod,
+    needsAddress,
+    lines,
+    coupon,
+    pricingSnapshot: {
+      subtotal: subtotalBeforeDiscount,
+      subtotalBeforeDiscount,
+      subtotalAfterDiscount,
+      delivery: deliveryPrice,
+      discount: discountAmount,
+      total,
+      couponApplied: Boolean(coupon),
+      couponCode: coupon?.code || null,
+      discountType: discountType || null,
+      discountValue:
+        typeof discountValue === "number" ? toMoneyNumber(discountValue) : null,
+    },
+  };
+}
+
 module.exports = () => ({
   async startCheckout(payload) {
-    const validated = validatePayload(payload);
-    const deliveryMethod = await getActiveDeliveryMethod(
-      validated.deliveryMethodCode
-    );
-    if (!deliveryMethod) {
-      throw new CheckoutBusinessError(
-        "Выбранный способ получения недоступен",
-        "DELIVERY_METHOD_NOT_AVAILABLE"
-      );
-    }
-
-    const needsAddress =
-      deliveryMethod.code === "courier" ||
-      deliveryMethod.code === "russian_post";
-    if (needsAddress && !validated.deliveryAddress) {
-      throw new CheckoutValidationError(
-        "Для выбранного способа получения требуется адрес доставки",
-        "DELIVERY_ADDRESS_REQUIRED"
-      );
-    }
-
-    const productMap = await fetchProductsBySlugs(
-      validated.items.map((item) => item.slug)
-    );
-    const lines = validated.items.map((item) => {
-      const product = productMap.get(item.slug);
-      if (!product) {
-        throw new CheckoutBusinessError(
-          `Товар "${item.slug}" не найден`,
-          "PRODUCT_NOT_FOUND"
-        );
-      }
-      const price = toMoneyNumber(product.price);
-      if (!price || price <= 0) {
-        throw new CheckoutBusinessError(
-          `У товара "${item.slug}" не задана цена`,
-          "PRODUCT_PRICE_INVALID"
-        );
-      }
-
-      const allowedCodes = (product.deliveryMethods || [])
-        .map((method) => normalizeText(method?.code))
-        .filter(Boolean);
-      if (
-        allowedCodes.length > 0 &&
-        !allowedCodes.includes(deliveryMethod.code)
-      ) {
-        throw new CheckoutBusinessError(
-          `Товар "${product.title || product.slug}" нельзя оформить со способом "${deliveryMethod.title}"`,
-          "PRODUCT_DELIVERY_NOT_ALLOWED"
-        );
-      }
-
-      return {
-        slug: item.slug,
-        title: String(product.title || product.slug || item.slug),
-        quantity: item.quantity,
-        price,
-      };
-    });
-
-    const subtotalBeforeDiscount = toMoneyNumber(
-      lines.reduce((sum, line) => sum + line.price * line.quantity, 0)
-    );
-    const coupon = await getActiveCoupon(validated.couponCode);
-    let discountAmount = 0;
-    let discountType = null;
-    let discountValue = null;
-    let subtotalAfterDiscount = subtotalBeforeDiscount;
-
-    if (coupon) {
-      discountType = coupon.discountType;
-      discountValue = toMoneyNumber(coupon.discountValue);
-      if (discountType === "percent") {
-        discountAmount = toMoneyNumber(
-          (subtotalBeforeDiscount * discountValue) / 100
-        );
-      } else {
-        discountAmount = toMoneyNumber(discountValue);
-      }
-
-      if (discountAmount > subtotalBeforeDiscount) {
-        discountAmount = subtotalBeforeDiscount;
-      }
-      subtotalAfterDiscount = toMoneyNumber(
-        subtotalBeforeDiscount - discountAmount
-      );
-    }
-
-    const deliveryPrice = toMoneyNumber(deliveryMethod.price);
-    const total = toMoneyNumber(subtotalAfterDiscount + deliveryPrice);
+    const quote = await buildCheckoutQuote(payload);
+    const {
+      validated,
+      deliveryMethod,
+      needsAddress,
+      lines,
+      coupon,
+      pricingSnapshot,
+    } = quote;
+    const {
+      subtotalBeforeDiscount,
+      subtotalAfterDiscount,
+      delivery: deliveryPrice,
+      discount: discountAmount,
+      total,
+      discountType,
+      discountValue,
+    } = pricingSnapshot;
 
     const createdOrder = await strapi.entityService.create("api::order.order", {
       data: {
@@ -454,13 +495,11 @@ module.exports = () => ({
     return {
       orderId,
       confirmationUrl,
-      pricingSnapshot: {
-        subtotal: subtotalBeforeDiscount,
-        delivery: deliveryPrice,
-        discount: discountAmount,
-        total,
-        couponApplied: Boolean(coupon),
-      },
+      pricingSnapshot,
     };
+  },
+  async quoteCheckout(payload) {
+    const { pricingSnapshot } = await buildCheckoutQuote(payload);
+    return { pricingSnapshot };
   },
 });
