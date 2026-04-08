@@ -1,6 +1,10 @@
 "use strict";
 
 const { randomUUID } = require("node:crypto");
+const {
+  sendOrderCreatedEmail,
+  sendOrderPaymentReminderEmail,
+} = require("../../../services/notifications/email");
 
 const YOOKASSA_API_URL = "https://api.yookassa.ru/v3";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -46,6 +50,10 @@ function normalizeText(value) {
 
 function normalizeCode(value) {
   return normalizeText(value).toUpperCase();
+}
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
 function toMoneyNumber(value) {
@@ -136,7 +144,7 @@ function mapYooKassaStatusToPaymentStatus(status) {
 function validatePayload(payload) {
   const customerName = normalizeText(payload.customerName);
   const phone = normalizeText(payload.phone);
-  const email = normalizeText(payload.email) || undefined;
+  const email = normalizeText(payload.email);
   const comment = normalizeText(payload.comment) || undefined;
   const deliveryMethodCode = normalizeText(payload.deliveryMethodCode);
   const deliveryAddress = normalizeText(payload.deliveryAddress) || undefined;
@@ -153,6 +161,12 @@ function validatePayload(payload) {
     throw new CheckoutValidationError(
       'Поле "Телефон" заполнено некорректно',
       "INVALID_PHONE"
+    );
+  }
+  if (!email || !isValidEmail(email)) {
+    throw new CheckoutValidationError(
+      'Поле "Email" заполнено некорректно',
+      "INVALID_EMAIL"
     );
   }
   if (!deliveryMethodCode) {
@@ -301,6 +315,87 @@ async function createYooKassaPayment({
       },
     }),
   });
+}
+
+function getPaymentExpiryDate(payment) {
+  const raw = payment?.expires_at || payment?.expiresAt;
+  if (!raw) return null;
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString();
+}
+
+async function persistPaymentForOrder(orderId, payment) {
+  const confirmationUrl = payment?.confirmation?.confirmation_url;
+  if (!confirmationUrl) {
+    throw new Error("YooKassa did not return confirmation_url");
+  }
+
+  await strapi.entityService.update("api::order.order", orderId, {
+    data: {
+      paymentId: payment.id,
+      paymentUrl: confirmationUrl,
+      paymentStatus: mapYooKassaStatusToPaymentStatus(payment.status),
+      paymentExpiresAt: getPaymentExpiryDate(payment),
+      lastPaymentAttemptAt: new Date().toISOString(),
+    },
+  });
+
+  return confirmationUrl;
+}
+
+async function createAndPersistOrderPayment({
+  orderId,
+  orderDocumentId,
+  orderPublicId,
+  amountValue,
+}) {
+  const payment = await createYooKassaPayment({
+    amountValue,
+    description: `Заказ #${orderPublicId}`,
+    orderDocumentId,
+    orderPublicId: String(orderPublicId),
+  });
+
+  const confirmationUrl = await persistPaymentForOrder(orderId, payment);
+  return {
+    payment,
+    confirmationUrl,
+  };
+}
+
+async function sendOrderEmailSafe(sender, payload, logContext) {
+  try {
+    await sender(payload);
+  } catch (error) {
+    strapi.log.error(`[checkout] ${logContext} failed`, error);
+  }
+}
+
+async function getOrderByResumeToken(resumeToken) {
+  const found = await strapi.entityService.findMany("api::order.order", {
+    fields: [
+      "customerName",
+      "email",
+      "itemsRaw",
+      "total",
+      "deliveryMethodCode",
+      "deliveryMethodTitle",
+      "status",
+      "paymentStatus",
+      "paymentUrl",
+      "paymentId",
+      "resumeToken",
+      "documentId",
+      "paymentExpiresAt",
+    ],
+    filters: {
+      resumeToken: { $eq: resumeToken },
+    },
+    limit: 1,
+  });
+
+  return found?.[0] || null;
 }
 
 async function buildCheckoutQuote(payload) {
@@ -464,38 +559,117 @@ module.exports = () => ({
         status: "new",
         paymentStatus: "pending",
         paymentProvider: "yookassa",
+        resumeToken: randomUUID(),
       },
     });
 
     const orderId = createdOrder?.id;
     const orderDocumentId = createdOrder?.documentId;
+    const resumeToken = createdOrder?.resumeToken;
     if (!orderId || !orderDocumentId) {
       throw new Error("Failed to create order");
     }
-
-    const payment = await createYooKassaPayment({
-      amountValue: toMoneyString(total),
-      description: `Заказ #${orderId}`,
-      orderDocumentId,
-      orderPublicId: String(orderId),
-    });
-    const confirmationUrl = payment?.confirmation?.confirmation_url;
-    if (!confirmationUrl) {
-      throw new Error("YooKassa did not return confirmation_url");
+    if (!resumeToken) {
+      throw new Error("Failed to create resume token");
     }
 
-    await strapi.entityService.update("api::order.order", orderId, {
-      data: {
-        paymentId: payment.id,
-        paymentUrl: confirmationUrl,
-        paymentStatus: mapYooKassaStatusToPaymentStatus(payment.status),
-      },
+    const { confirmationUrl } = await createAndPersistOrderPayment({
+      orderId,
+      orderDocumentId,
+      orderPublicId: String(orderId),
+      amountValue: toMoneyString(total),
     });
+    await sendOrderEmailSafe(
+      sendOrderCreatedEmail,
+      {
+        orderId,
+        customerName: validated.customerName,
+        email: validated.email,
+        itemsRaw: lines,
+        total,
+        deliveryMethodCode: deliveryMethod.code,
+        deliveryMethodTitle: deliveryMethod.title,
+        paymentUrl: confirmationUrl,
+      },
+      "send order created email"
+    );
 
     return {
       orderId,
+      resumeToken,
       confirmationUrl,
       pricingSnapshot,
+    };
+  },
+  async resumeCheckout(payload) {
+    const resumeToken = normalizeText(payload.resumeToken);
+    if (!resumeToken) {
+      throw new CheckoutValidationError(
+        "Не передан ключ возобновления оплаты",
+        "RESUME_TOKEN_REQUIRED"
+      );
+    }
+
+    const order = await getOrderByResumeToken(resumeToken);
+    if (!order?.id || !order?.documentId) {
+      throw new CheckoutBusinessError(
+        "Заказ для возобновления не найден",
+        "ORDER_NOT_FOUND"
+      );
+    }
+
+    if (order.paymentStatus === "paid") {
+      return {
+        orderId: order.id,
+        paymentStatus: order.paymentStatus,
+        confirmationUrl: null,
+      };
+    }
+
+    if (order.status === "cancelled") {
+      throw new CheckoutBusinessError(
+        "Заказ отменен и недоступен для оплаты",
+        "ORDER_CANCELLED"
+      );
+    }
+
+    if (
+      order.paymentStatus === "pending" &&
+      normalizeText(order.paymentUrl) &&
+      order.paymentStatus !== "canceled"
+    ) {
+      return {
+        orderId: order.id,
+        paymentStatus: order.paymentStatus,
+        confirmationUrl: order.paymentUrl,
+      };
+    }
+
+    const { confirmationUrl, payment } = await createAndPersistOrderPayment({
+      orderId: order.id,
+      orderDocumentId: order.documentId,
+      orderPublicId: String(order.id),
+      amountValue: toMoneyString(order.total),
+    });
+
+    if (payment?.id) {
+      await sendOrderEmailSafe(
+        sendOrderPaymentReminderEmail,
+        {
+          orderId: order.id,
+          customerName: order.customerName,
+          email: order.email,
+          total: toMoneyNumber(order.total),
+          paymentUrl: confirmationUrl,
+        },
+        "send order payment reminder email"
+      );
+    }
+
+    return {
+      orderId: order.id,
+      paymentStatus: "pending",
+      confirmationUrl,
     };
   },
   async quoteCheckout(payload) {

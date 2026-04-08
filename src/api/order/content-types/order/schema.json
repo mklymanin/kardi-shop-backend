@@ -78,6 +78,15 @@
     "paymentUrl": {
       "type": "text"
     },
+    "resumeToken": {
+      "type": "uid"
+    },
+    "paymentExpiresAt": {
+      "type": "datetime"
+    },
+    "lastPaymentAttemptAt": {
+      "type": "datetime"
+    },
     "paymentStatus": {
       "type": "enumeration",
       "enum": ["pending", "waiting_for_capture", "paid", "canceled", "failed"],

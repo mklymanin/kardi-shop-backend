@@ -18,5 +18,13 @@ module.exports = {
         auth: false,
       },
     },
+    {
+      method: "POST",
+      path: "/checkout/resume",
+      handler: "checkout.resume",
+      config: {
+        auth: false,
+      },
+    },
   ],
 };

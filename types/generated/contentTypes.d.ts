@@ -561,10 +561,12 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
     discountValue: Schema.Attribute.Decimal;
     email: Schema.Attribute.Email;
     itemsRaw: Schema.Attribute.JSON & Schema.Attribute.Required;
+    lastPaymentAttemptAt: Schema.Attribute.DateTime;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<"oneToMany", "api::order.order"> &
       Schema.Attribute.Private;
     paidAt: Schema.Attribute.DateTime;
+    paymentExpiresAt: Schema.Attribute.DateTime;
     paymentId: Schema.Attribute.String;
     paymentProvider: Schema.Attribute.String;
     paymentStatus: Schema.Attribute.Enumeration<
@@ -574,6 +576,7 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
     paymentUrl: Schema.Attribute.Text;
     phone: Schema.Attribute.String & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
+    resumeToken: Schema.Attribute.UID;
     status: Schema.Attribute.Enumeration<
       ["new", "processing", "completed", "cancelled"]
     > &
