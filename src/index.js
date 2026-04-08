@@ -1,3 +1,7 @@
+const {
+  ensureDefaultDeliveryMethods,
+} = require("./bootstrap/ensure-delivery-methods");
+
 const publicReadActions = [
   "api::product.product.find",
   "api::product.product.findOne",
@@ -6,6 +10,8 @@ const publicReadActions = [
   "api::page.page.find",
   "api::page.page.findOne",
   "api::site-setting.site-setting.find",
+  "api::delivery-method.delivery-method.find",
+  "api::delivery-method.delivery-method.findOne",
   "api::lead.lead.create",
 ];
 const revokedPublicActions = ["api::order.order.create"];
@@ -64,5 +70,6 @@ module.exports = {
 
   async bootstrap({ strapi }) {
     await ensurePublicPermissions(strapi);
+    await ensureDefaultDeliveryMethods(strapi);
   },
 };

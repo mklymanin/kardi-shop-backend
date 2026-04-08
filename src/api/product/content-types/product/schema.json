@@ -45,6 +45,11 @@
       "multiple": false,
       "allowedTypes": ["images"]
     },
+    "deliveryMethods": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::delivery-method.delivery-method"
+    },
     "seoTitle": {
       "type": "string"
     },

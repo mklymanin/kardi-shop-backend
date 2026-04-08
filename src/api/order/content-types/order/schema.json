@@ -28,6 +28,21 @@
       "type": "json",
       "required": true
     },
+    "subtotal": {
+      "type": "decimal"
+    },
+    "deliveryMethodCode": {
+      "type": "string"
+    },
+    "deliveryMethodTitle": {
+      "type": "string"
+    },
+    "deliveryAddress": {
+      "type": "text"
+    },
+    "deliveryPrice": {
+      "type": "decimal"
+    },
     "total": {
       "type": "decimal"
     },

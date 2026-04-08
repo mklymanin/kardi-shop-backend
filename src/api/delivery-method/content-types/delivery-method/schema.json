@@ -1,0 +1,45 @@
+{
+  "kind": "collectionType",
+  "collectionName": "delivery_methods",
+  "info": {
+    "singularName": "delivery-method",
+    "pluralName": "delivery-methods",
+    "displayName": "Delivery Method"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "code": {
+      "type": "uid",
+      "targetField": "title",
+      "required": true
+    },
+    "price": {
+      "type": "decimal",
+      "required": true,
+      "default": 0
+    },
+    "pickupAddress": {
+      "type": "text"
+    },
+    "isActive": {
+      "type": "boolean",
+      "default": true
+    },
+    "sortOrder": {
+      "type": "integer",
+      "default": 0
+    },
+    "products": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::product.product",
+      "mappedBy": "deliveryMethods"
+    }
+  }
+}

@@ -401,6 +401,43 @@ export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiDeliveryMethodDeliveryMethod
+  extends Struct.CollectionTypeSchema {
+  collectionName: "delivery_methods";
+  info: {
+    displayName: "Delivery Method";
+    pluralName: "delivery-methods";
+    singularName: "delivery-method";
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    code: Schema.Attribute.UID<"title"> & Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> &
+      Schema.Attribute.Private;
+    isActive: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      "oneToMany",
+      "api::delivery-method.delivery-method"
+    > &
+      Schema.Attribute.Private;
+    pickupAddress: Schema.Attribute.Text;
+    price: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<0>;
+    products: Schema.Attribute.Relation<"manyToMany", "api::product.product">;
+    publishedAt: Schema.Attribute.DateTime;
+    sortOrder: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+    title: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiFaqFaq extends Struct.CollectionTypeSchema {
   collectionName: "faqs";
   info: {
@@ -474,6 +511,10 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     currency: Schema.Attribute.String & Schema.Attribute.DefaultTo<"RUB">;
     customerName: Schema.Attribute.String & Schema.Attribute.Required;
+    deliveryAddress: Schema.Attribute.Text;
+    deliveryMethodCode: Schema.Attribute.String;
+    deliveryMethodTitle: Schema.Attribute.String;
+    deliveryPrice: Schema.Attribute.Decimal;
     email: Schema.Attribute.Email;
     itemsRaw: Schema.Attribute.JSON & Schema.Attribute.Required;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
@@ -493,6 +534,7 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
       ["new", "processing", "completed", "cancelled"]
     > &
       Schema.Attribute.DefaultTo<"new">;
+    subtotal: Schema.Attribute.Decimal;
     total: Schema.Attribute.Decimal;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> &
@@ -544,6 +586,10 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> &
       Schema.Attribute.Private;
+    deliveryMethods: Schema.Attribute.Relation<
+      "manyToMany",
+      "api::delivery-method.delivery-method"
+    >;
     description: Schema.Attribute.RichText;
     excerpt: Schema.Attribute.Text;
     image: Schema.Attribute.Media<"images">;
@@ -1112,6 +1158,7 @@ declare module "@strapi/strapi" {
       "admin::transfer-token-permission": AdminTransferTokenPermission;
       "admin::user": AdminUser;
       "api::category.category": ApiCategoryCategory;
+      "api::delivery-method.delivery-method": ApiDeliveryMethodDeliveryMethod;
       "api::faq.faq": ApiFaqFaq;
       "api::lead.lead": ApiLeadLead;
       "api::order.order": ApiOrderOrder;
