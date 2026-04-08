@@ -13,6 +13,7 @@ const publicReadActions = [
   "api::delivery-method.delivery-method.find",
   "api::delivery-method.delivery-method.findOne",
   "api::lead.lead.create",
+  "api::checkout.checkout.start",
 ];
 const revokedPublicActions = ["api::order.order.create"];
 

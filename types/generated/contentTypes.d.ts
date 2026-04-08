@@ -401,6 +401,46 @@ export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiCouponCoupon extends Struct.CollectionTypeSchema {
+  collectionName: "coupons";
+  info: {
+    displayName: "Coupon";
+    pluralName: "coupons";
+    singularName: "coupon";
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    code: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique &
+      Schema.Attribute.SetMinMaxLength<{
+        minLength: 3;
+      }>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.Text;
+    discountType: Schema.Attribute.Enumeration<["percent", "fixed"]> &
+      Schema.Attribute.Required;
+    discountValue: Schema.Attribute.Decimal & Schema.Attribute.Required;
+    expiresAt: Schema.Attribute.DateTime;
+    isActive: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      "oneToMany",
+      "api::coupon.coupon"
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    startsAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiDeliveryMethodDeliveryMethod
   extends Struct.CollectionTypeSchema {
   collectionName: "delivery_methods";
@@ -506,6 +546,7 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
   };
   attributes: {
     comment: Schema.Attribute.Text;
+    couponCode: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> &
       Schema.Attribute.Private;
@@ -515,6 +556,9 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
     deliveryMethodCode: Schema.Attribute.String;
     deliveryMethodTitle: Schema.Attribute.String;
     deliveryPrice: Schema.Attribute.Decimal;
+    discountAmount: Schema.Attribute.Decimal;
+    discountType: Schema.Attribute.Enumeration<["percent", "fixed"]>;
+    discountValue: Schema.Attribute.Decimal;
     email: Schema.Attribute.Email;
     itemsRaw: Schema.Attribute.JSON & Schema.Attribute.Required;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
@@ -535,6 +579,8 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.DefaultTo<"new">;
     subtotal: Schema.Attribute.Decimal;
+    subtotalAfterDiscount: Schema.Attribute.Decimal;
+    subtotalBeforeDiscount: Schema.Attribute.Decimal;
     total: Schema.Attribute.Decimal;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> &
@@ -1158,6 +1204,7 @@ declare module "@strapi/strapi" {
       "admin::transfer-token-permission": AdminTransferTokenPermission;
       "admin::user": AdminUser;
       "api::category.category": ApiCategoryCategory;
+      "api::coupon.coupon": ApiCouponCoupon;
       "api::delivery-method.delivery-method": ApiDeliveryMethodDeliveryMethod;
       "api::faq.faq": ApiFaqFaq;
       "api::lead.lead": ApiLeadLead;

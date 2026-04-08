@@ -48,7 +48,8 @@
     "deliveryMethods": {
       "type": "relation",
       "relation": "manyToMany",
-      "target": "api::delivery-method.delivery-method"
+      "target": "api::delivery-method.delivery-method",
+      "inversedBy": "products"
     },
     "seoTitle": {
       "type": "string"

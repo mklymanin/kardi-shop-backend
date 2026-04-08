@@ -31,6 +31,12 @@
     "subtotal": {
       "type": "decimal"
     },
+    "subtotalBeforeDiscount": {
+      "type": "decimal"
+    },
+    "subtotalAfterDiscount": {
+      "type": "decimal"
+    },
     "deliveryMethodCode": {
       "type": "string"
     },
@@ -44,6 +50,19 @@
       "type": "decimal"
     },
     "total": {
+      "type": "decimal"
+    },
+    "couponCode": {
+      "type": "string"
+    },
+    "discountType": {
+      "type": "enumeration",
+      "enum": ["percent", "fixed"]
+    },
+    "discountValue": {
+      "type": "decimal"
+    },
+    "discountAmount": {
       "type": "decimal"
     },
     "currency": {
