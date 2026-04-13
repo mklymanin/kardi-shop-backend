@@ -1,0 +1,28 @@
+{
+  "collectionName": "components_review_review_entries",
+  "info": {
+    "displayName": "Review entry",
+    "description": "Один отзыв для блока на сайте"
+  },
+  "options": {},
+  "attributes": {
+    "authorName": {
+      "type": "string",
+      "required": true
+    },
+    "rating": {
+      "type": "decimal",
+      "required": true,
+      "min": 1,
+      "max": 5
+    },
+    "text": {
+      "type": "text",
+      "required": true
+    },
+    "reviewDate": {
+      "type": "datetime",
+      "required": true
+    }
+  }
+}

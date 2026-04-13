@@ -1,0 +1,27 @@
+{
+  "kind": "singleType",
+  "collectionName": "customer_reviews",
+  "info": {
+    "singularName": "customer-review",
+    "pluralName": "customer-reviews",
+    "displayName": "Customer reviews"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "overallRating": {
+      "type": "decimal",
+      "required": true,
+      "min": 0,
+      "max": 5,
+      "writable": false
+    },
+    "reviews": {
+      "type": "component",
+      "repeatable": true,
+      "component": "review.review-entry",
+      "required": false
+    }
+  }
+}

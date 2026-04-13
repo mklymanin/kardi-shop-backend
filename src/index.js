@@ -1,6 +1,9 @@
 const {
   ensureDefaultDeliveryMethods,
 } = require("./bootstrap/ensure-delivery-methods");
+const {
+  ensureCustomerReviewOverallRatingReadonly,
+} = require("./bootstrap/ensure-customer-review-overall-rating-readonly");
 
 const publicReadActions = [
   "api::product.product.find",
@@ -10,6 +13,7 @@ const publicReadActions = [
   "api::page.page.find",
   "api::page.page.findOne",
   "api::site-setting.site-setting.find",
+  "api::customer-review.customer-review.find",
   "api::delivery-method.delivery-method.find",
   "api::delivery-method.delivery-method.findOne",
   "api::lead.lead.create",
@@ -72,5 +76,6 @@ module.exports = {
   async bootstrap({ strapi }) {
     await ensurePublicPermissions(strapi);
     await ensureDefaultDeliveryMethods(strapi);
+    await ensureCustomerReviewOverallRatingReadonly(strapi);
   },
 };

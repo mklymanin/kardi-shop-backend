@@ -441,6 +441,44 @@ export interface ApiCouponCoupon extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiCustomerReviewCustomerReview
+  extends Struct.SingleTypeSchema {
+  collectionName: "customer_reviews";
+  info: {
+    displayName: "Customer reviews";
+    pluralName: "customer-reviews";
+    singularName: "customer-review";
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      "oneToMany",
+      "api::customer-review.customer-review"
+    > &
+      Schema.Attribute.Private;
+    overallRating: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 5;
+          min: 0;
+        },
+        number
+      >;
+    publishedAt: Schema.Attribute.DateTime;
+    reviews: Schema.Attribute.Component<"review.review-entry", true>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiDeliveryMethodDeliveryMethod
   extends Struct.CollectionTypeSchema {
   collectionName: "delivery_methods";
@@ -1208,6 +1246,7 @@ declare module "@strapi/strapi" {
       "admin::user": AdminUser;
       "api::category.category": ApiCategoryCategory;
       "api::coupon.coupon": ApiCouponCoupon;
+      "api::customer-review.customer-review": ApiCustomerReviewCustomerReview;
       "api::delivery-method.delivery-method": ApiDeliveryMethodDeliveryMethod;
       "api::faq.faq": ApiFaqFaq;
       "api::lead.lead": ApiLeadLead;
