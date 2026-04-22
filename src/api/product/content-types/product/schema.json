@@ -31,6 +31,16 @@
     "price": {
       "type": "decimal"
     },
+    "rentalAvailable": {
+      "type": "boolean",
+      "default": false
+    },
+    "rentalPrice": {
+      "type": "decimal"
+    },
+    "rentalPeriodLabel": {
+      "type": "string"
+    },
     "isPublishedToStore": {
       "type": "boolean",
       "default": true

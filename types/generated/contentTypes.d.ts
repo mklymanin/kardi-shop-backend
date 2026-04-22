@@ -690,6 +690,10 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     price: Schema.Attribute.Decimal;
     publishedAt: Schema.Attribute.DateTime;
+    rentalAvailable: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
+    rentalPeriodLabel: Schema.Attribute.String;
+    rentalPrice: Schema.Attribute.Decimal;
     seoDescription: Schema.Attribute.Text;
     seoTitle: Schema.Attribute.String;
     sku: Schema.Attribute.String;

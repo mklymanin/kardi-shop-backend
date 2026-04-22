@@ -13,8 +13,12 @@ function formatLines(lines) {
   return lines
     .map((line) => {
       const quantity = Number(line?.quantity) || 0;
-      const title = String(line?.title || line?.slug || "Товар");
+      let title = String(line?.title || line?.slug || "Товар");
       const price = Number(line?.price) || 0;
+      if (line?.lineType === "rent") {
+        const period = String(line?.rentalPeriodLabel || "").trim();
+        title = period ? `${title} (аренда, ${period})` : `${title} (аренда)`;
+      }
       return `- ${title}: ${quantity} x ${formatMoney(price)}`;
     })
     .join("\n");

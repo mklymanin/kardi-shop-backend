@@ -52,6 +52,14 @@ function normalizeCode(value) {
   return normalizeText(value).toUpperCase();
 }
 
+function normalizeLineType(value) {
+  const t = normalizeText(value).toLowerCase();
+  if (t === "rent") {
+    return "rent";
+  }
+  return "purchase";
+}
+
 function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
@@ -182,6 +190,7 @@ function validatePayload(payload) {
   const items = inputItems.map((item) => ({
     slug: normalizeText(item.slug),
     quantity: Math.max(1, Math.trunc(Number(item.quantity) || 0)),
+    lineType: normalizeLineType(item.lineType),
   }));
 
   if (items.some((item) => !item.slug)) {
@@ -205,7 +214,14 @@ function validatePayload(payload) {
 
 async function fetchProductsBySlugs(slugs) {
   const products = await strapi.entityService.findMany("api::product.product", {
-    fields: ["slug", "title", "price"],
+    fields: [
+      "slug",
+      "title",
+      "price",
+      "rentalAvailable",
+      "rentalPrice",
+      "rentalPeriodLabel",
+    ],
     filters: {
       slug: { $in: slugs },
       isPublishedToStore: { $eq: true },
@@ -430,12 +446,35 @@ async function buildCheckoutQuote(payload) {
         "PRODUCT_NOT_FOUND"
       );
     }
-    const price = toMoneyNumber(product.price);
-    if (!price || price <= 0) {
-      throw new CheckoutBusinessError(
-        `У товара "${item.slug}" не задана цена`,
-        "PRODUCT_PRICE_INVALID"
-      );
+
+    const isRent = item.lineType === "rent";
+    let price;
+    let rentalPeriodLabel = null;
+
+    if (isRent) {
+      if (!product.rentalAvailable) {
+        throw new CheckoutBusinessError(
+          `Товар "${product.title || product.slug}" недоступен для аренды`,
+          "PRODUCT_RENTAL_NOT_AVAILABLE"
+        );
+      }
+      price = toMoneyNumber(product.rentalPrice);
+      if (!price || price <= 0) {
+        throw new CheckoutBusinessError(
+          `У товара "${item.slug}" не задана цена аренды`,
+          "PRODUCT_RENTAL_PRICE_INVALID"
+        );
+      }
+      const label = normalizeText(product.rentalPeriodLabel);
+      rentalPeriodLabel = label || null;
+    } else {
+      price = toMoneyNumber(product.price);
+      if (!price || price <= 0) {
+        throw new CheckoutBusinessError(
+          `У товара "${item.slug}" не задана цена`,
+          "PRODUCT_PRICE_INVALID"
+        );
+      }
     }
 
     const allowedCodes = (product.deliveryMethods || [])
@@ -451,12 +490,17 @@ async function buildCheckoutQuote(payload) {
       );
     }
 
-    return {
+    const line = {
       slug: item.slug,
       title: String(product.title || product.slug || item.slug),
       quantity: item.quantity,
       price,
+      lineType: item.lineType,
     };
+    if (isRent && rentalPeriodLabel) {
+      line.rentalPeriodLabel = rentalPeriodLabel;
+    }
+    return line;
   });
 
   const subtotalBeforeDiscount = toMoneyNumber(
