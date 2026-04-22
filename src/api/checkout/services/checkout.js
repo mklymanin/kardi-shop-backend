@@ -74,6 +74,14 @@ function toMoneyString(value) {
   return toMoneyNumber(value).toFixed(2);
 }
 
+function toNonNegativeInt(value) {
+  const n = Math.trunc(Number(value));
+  if (!Number.isFinite(n) || n < 0) {
+    return 0;
+  }
+  return n;
+}
+
 function getYooKassaAuthHeader() {
   const shopId = process.env.YOOKASSA_SHOP_ID;
   const secretKey = process.env.YOOKASSA_SECRET_KEY;
@@ -218,6 +226,7 @@ async function fetchProductsBySlugs(slugs) {
       "slug",
       "title",
       "price",
+      "stock",
       "rentalAvailable",
       "rentalPrice",
       "rentalPeriodLabel",
@@ -487,6 +496,14 @@ async function buildCheckoutQuote(payload) {
       throw new CheckoutBusinessError(
         `Товар "${product.title || product.slug}" нельзя оформить со способом "${deliveryMethod.title}"`,
         "PRODUCT_DELIVERY_NOT_ALLOWED"
+      );
+    }
+
+    const stock = toNonNegativeInt(product.stock);
+    if (item.quantity > stock) {
+      throw new CheckoutBusinessError(
+        `Недостаточно товара «${product.title || product.slug}» на складе`,
+        "INSUFFICIENT_STOCK"
       );
     }
 

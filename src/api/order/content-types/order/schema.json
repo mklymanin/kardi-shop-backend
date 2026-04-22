@@ -99,6 +99,10 @@
       "type": "enumeration",
       "enum": ["new", "processing", "completed", "cancelled"],
       "default": "new"
+    },
+    "inventoryApplied": {
+      "type": "boolean",
+      "default": false
     }
   }
 }

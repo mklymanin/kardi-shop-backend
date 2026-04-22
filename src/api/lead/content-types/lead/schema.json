@@ -26,6 +26,17 @@
     },
     "source": {
       "type": "string"
+    },
+    "kind": {
+      "type": "enumeration",
+      "enum": ["contact", "preorder"],
+      "default": "contact"
+    },
+    "productSlug": {
+      "type": "string"
+    },
+    "itemsJson": {
+      "type": "json"
     }
   }
 }

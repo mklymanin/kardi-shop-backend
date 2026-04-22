@@ -41,6 +41,11 @@
     "rentalPeriodLabel": {
       "type": "string"
     },
+    "stock": {
+      "type": "integer",
+      "min": 0,
+      "default": 0
+    },
     "isPublishedToStore": {
       "type": "boolean",
       "default": true

@@ -561,9 +561,13 @@ export interface ApiLeadLead extends Struct.CollectionTypeSchema {
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<"oneToMany", "api::lead.lead"> &
       Schema.Attribute.Private;
+    itemsJson: Schema.Attribute.JSON;
+    kind: Schema.Attribute.Enumeration<["contact", "preorder"]> &
+      Schema.Attribute.DefaultTo<"contact">;
     message: Schema.Attribute.Text;
     name: Schema.Attribute.String & Schema.Attribute.Required;
     phone: Schema.Attribute.String & Schema.Attribute.Required;
+    productSlug: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     source: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
@@ -598,6 +602,8 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
     discountType: Schema.Attribute.Enumeration<["percent", "fixed"]>;
     discountValue: Schema.Attribute.Decimal;
     email: Schema.Attribute.Email;
+    inventoryApplied: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
     itemsRaw: Schema.Attribute.JSON & Schema.Attribute.Required;
     lastPaymentAttemptAt: Schema.Attribute.DateTime;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
@@ -697,6 +703,7 @@ export interface ApiProductProduct extends Struct.CollectionTypeSchema {
     seoDescription: Schema.Attribute.Text;
     seoTitle: Schema.Attribute.String;
     sku: Schema.Attribute.String;
+    stock: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
     slug: Schema.Attribute.UID<"title"> & Schema.Attribute.Required;
     title: Schema.Attribute.String & Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
