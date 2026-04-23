@@ -22,9 +22,23 @@ export interface ReviewReviewEntry extends Struct.ComponentSchema {
   };
 }
 
+export interface BannerHeroSlide extends Struct.ComponentSchema {
+  collectionName: "components_banner_hero_slides";
+  info: {
+    description: "\u0421\u043B\u0430\u0439\u0434 \u0431\u0430\u043D\u043D\u0435\u0440\u0430 \u043D\u0430 \u0433\u043B\u0430\u0432\u043D\u043E\u0439";
+    displayName: "Hero slide";
+  };
+  attributes: {
+    image: Schema.Attribute.Media<"images"> & Schema.Attribute.Required;
+    link: Schema.Attribute.String;
+    text: Schema.Attribute.Text;
+  };
+}
+
 declare module "@strapi/strapi" {
   export module Public {
     export interface ComponentSchemas {
+      "banner.hero-slide": BannerHeroSlide;
       "review.review-entry": ReviewReviewEntry;
     }
   }

@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_banner_hero_slides",
+  "info": {
+    "displayName": "Hero slide",
+    "description": "Слайд баннера на главной"
+  },
+  "options": {},
+  "attributes": {
+    "text": {
+      "type": "text"
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": ["images"]
+    },
+    "link": {
+      "type": "string"
+    }
+  }
+}

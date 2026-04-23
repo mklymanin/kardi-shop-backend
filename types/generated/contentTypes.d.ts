@@ -732,6 +732,7 @@ export interface ApiSiteSettingSiteSetting extends Struct.SingleTypeSchema {
     defaultSeoDescription: Schema.Attribute.Text;
     defaultSeoTitle: Schema.Attribute.String;
     googleAnalyticsId: Schema.Attribute.String;
+    heroBanners: Schema.Attribute.Component<"banner.hero-slide", true>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       "oneToMany",
