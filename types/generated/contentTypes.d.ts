@@ -725,6 +725,7 @@ export interface ApiSiteSettingSiteSetting extends Struct.SingleTypeSchema {
   attributes: {
     contactEmail: Schema.Attribute.Email;
     contactPhone: Schema.Attribute.String;
+    workSchedule: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<"oneToOne", "admin::user"> &
       Schema.Attribute.Private;

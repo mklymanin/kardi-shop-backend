@@ -26,6 +26,9 @@
     "contactPhone": {
       "type": "string"
     },
+    "workSchedule": {
+      "type": "string"
+    },
     "yandexMetrikaId": {
       "type": "string"
     },
